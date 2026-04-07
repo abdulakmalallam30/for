@@ -609,45 +609,40 @@
         }
 
         // Load videos from media folder
-        async function loadVideos() {
+        function loadVideos() {
             try {
-                const response = await fetch('./media/', {
-                    method: 'GET',
-                    cache: 'no-store'
+                // Hardcoded video filenames since Vercel doesn't support directory listing
+                const videoFiles = ['1.mp4', '2.mp4', '3.mp4', '4.mp4'];
+                
+                // Check which files are available and display them
+                const availableVideos = [];
+                let checkedCount = 0;
+
+                videoFiles.forEach((filename, index) => {
+                    const video = document.createElement('video');
+                    video.onloadedmetadata = () => {
+                        availableVideos.push(filename);
+                        checkedCount++;
+                        if (checkedCount === videoFiles.length) {
+                            if (availableVideos.length > 0) {
+                                displayVideos(availableVideos);
+                            }
+                        }
+                    };
+                    video.onerror = () => {
+                        checkedCount++;
+                        if (checkedCount === videoFiles.length) {
+                            if (availableVideos.length > 0) {
+                                displayVideos(availableVideos);
+                            }
+                        }
+                    };
+                    video.src = `./media/${filename}`;
                 });
-                
-                if (!response.ok) {
-                    console.log('Media folder not found');
-                    return;
-                }
-
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Extract file links from directory listing
-                const links = doc.querySelectorAll('a');
-                const videoFiles = [];
-
-                for (let link of links) {
-                    const href = link.getAttribute('href');
-                    if (!href || href === '../' || href.endsWith('/')) continue;
-
-                    const name = href.split('/').pop();
-                    const ext = name.split('.').pop().toLowerCase();
-
-                    // Get all video files
-                    if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) {
-                        videoFiles.push(name);
-                    }
-                }
-
-                // Display first 4 videos
-                if (videoFiles.length > 0) {
-                    displayVideos(videoFiles.slice(0, 4));
-                }
             } catch (error) {
                 console.log('Error loading videos:', error);
+                // Fallback: try to display videos anyway
+                displayVideos(['1.mp4', '2.mp4', '3.mp4', '4.mp4']);
             }
         }
 
